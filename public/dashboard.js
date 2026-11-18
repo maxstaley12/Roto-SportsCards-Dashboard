@@ -70,12 +70,12 @@ function fillTiles() {
     const row1 = document.createElement('span'); row1.className = 'chiprow';
     const chip = document.createElement('span'); chip.className = 'chip';
     const v = t.kind === 'pct' ? r.change_pct : r.change_abs;
-    if (v == null || isNaN(v)) { chip.textContent = t.kind === 'pct' && r.current > 0 && !r.previous ? 'new' : '—'; chip.classList.add('flat'); }
+    if (v == null || isNaN(v)) { chip.textContent = r.current > 0 && !r.previous ? 'new' : '—'; chip.classList.add('flat'); }
     else {
       chip.textContent = t.kind === 'pct' ? signed(v) + '%' : signed(v);
       if (v === 0) chip.classList.add('flat'); else chip.classList.add((t.better === 'up' ? v > 0 : v < 0) ? 'good' : 'bad');
     }
-    const vs = document.createElement('span'); vs.className = 'vs'; vs.textContent = ' ' + (t.unit || 'vs previous period');
+    const vs = document.createElement('span'); vs.className = 'vs'; vs.textContent = ' ' + (chip.textContent === 'new' || chip.textContent === '—' ? 'vs previous period' : (t.unit || 'vs previous period'));
     row1.append(chip, vs);
     const row2 = document.createElement('span'); row2.className = 'chiprow';
     const l2 = document.createElement('span'); l2.className = 'vs'; l2.textContent = 'Previous: ';
@@ -103,6 +103,11 @@ function fillLede() {
   const isDefault = META && META.defaults.start === cur.start && META.defaults.end === cur.end;
   if (!s.current && !s.previous) {
     e.append((isDefault ? 'Last 3 months (' : 'For ') + rangeText(cur.start, cur.end) + (isDefault ? ')' : '') + ': no sessions to ' + S.name + ' in this range or the previous ' + DATA.days + ' days. A page that went live recently will show zeros until it has data.');
+    return;
+  }
+  const pre = (isDefault ? 'Last 3 months (' : 'For ') + rangeText(cur.start, cur.end) + (isDefault ? ')' : '');
+  if (!s.previous) {
+    e.append(pre + ', ' + S.name + ' had ', b(NUM.int(s.current) + ' sessions'), ', ', b(NUM.int(x.current || 0)) , ' of them with an exit click, and ', b(NUM.int(c.current || 0) + ' search clicks'), '. There is no data in the previous ' + DATA.days + ' days, so no comparison yet.');
     return;
   }
   e.append((isDefault ? 'Last 3 months (' : 'For ') + rangeText(cur.start, cur.end) + (isDefault ? ')' : '') + ', sessions to ' + S.name + ' are ', b(pctText(s.change_pct)),
@@ -137,6 +142,22 @@ function fillText() {
   setText('def-window', days + ' days, ' + rangeText(cur.start, cur.end) + '.');
   setText('asof-tag', 'AS OF ' + md(cur.end).toUpperCase());
   setText('asof-text', 'Search Console data lags about two days, so ranges end no later than ' + md(META.latest) + '. Dates move forward on their own: the default view is always the last 3 months.');
+  // explain empty comparisons: the section only started getting traffic on a certain date
+  const n = DATA.notes || {}, ln = el('launchnote');
+  const nearStart = n.firstDate && n.firstDate > cur.start;
+  if (ln) {
+    if (n.previousEmpty || nearStart) {
+      const bits = [];
+      if (n.firstDate) bits.push('The first traffic in this range is on ' + mdy(n.firstDate) + ', so earlier days are empty.');
+      if (n.previousEmpty) bits.push('The previous period (' + rangeText(pv.start, pv.end) + ') has no data at all, so every change shows as "new".');
+      else if (n.firstDate && n.firstDate > pv.start) bits.push('The previous period only has data from ' + mdy(n.firstDate) + ', so changes are inflated.');
+      bits.push('A full comparison needs data back to ' + mdy(pv.start) + '. A shorter range such as the last 28 days gets there sooner.');
+      ln.replaceChildren();
+      const b = document.createElement('b'); b.textContent = 'New section. ';
+      ln.append(b, bits.join(' '));
+      ln.classList.remove('hide');
+    } else ln.classList.add('hide');
+  }
   // the brand comparison only makes sense for the All view
   const all = DATA.scope === 'all';
   el('brands').classList.toggle('hide', !all);
