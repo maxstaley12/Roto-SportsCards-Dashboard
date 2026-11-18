@@ -148,3 +148,9 @@ body { margin: 0; background: #f5f7fb; }
 .sc #tbl-queries { min-width: 900px; }
 .sc #tbl-queries td:first-child { min-width: 200px; }
 .sc #tbl-queries td:nth-child(2) { min-width: 200px; color: #3a4a6b; word-break: break-all; }
+.sc table.grid th.sortable { cursor: pointer; user-select: none; }
+.sc table.grid th.sortable:hover { color: var(--navy); background: #e6ebf4; }
+.sc table.grid th.sortable:focus-visible { outline: 2px solid var(--navy); outline-offset: -2px; }
+.sc table.grid th[data-dir] { color: var(--navy); }
+.sc table.grid th[data-dir="asc"]::after { content: " \25B2"; font-size: 9px; }
+.sc table.grid th[data-dir="desc"]::after { content: " \25BC"; font-size: 9px; }

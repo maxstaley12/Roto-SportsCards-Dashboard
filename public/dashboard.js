@@ -282,9 +282,53 @@ const goodBad = (v) => (v > 0 ? 'good' : v < 0 ? 'bad' : 'flat');
 const chg = (pctv, cur) => (pctv == null ? (cur > 0 ? 'new' : '—') : signed(pctv) + '%');
 const chgTone = (pctv) => (pctv == null ? 'flat' : goodBad(pctv));
 
+// Every column header is clickable. A column sorts by its `sort` function, or by r[key] when it has a key.
+// Empty values always go last; "new" (nothing in the previous period) counts as the biggest change.
+const SORT = {}; // table body id -> { i: column index, dir: 1 or -1 }
+const LAST = {}; // table body id -> { rows, cols } from the latest draw, so a header click can redraw
+const chgSort = (pctv, cur) => (pctv == null ? (cur > 0 ? Infinity : null) : pctv);
+const sortVal = (c, r) => (c.sort ? c.sort(r) : c.key ? r[c.key] : null);
+
+function sortedRows(bodyId, rows, cols) {
+  const st = SORT[bodyId];
+  if (!st || !cols[st.i]) return rows;
+  const c = cols[st.i];
+  const empty = (v) => v == null || (typeof v === 'number' && isNaN(v));
+  return rows.map((r, i) => ({ r, i, v: sortVal(c, r) })).sort((x, y) => {
+    const ex = empty(x.v), ey = empty(y.v);
+    if (ex || ey) return ex === ey ? x.i - y.i : ex ? 1 : -1;
+    const d = typeof x.v === 'string' || typeof y.v === 'string' ? String(x.v).localeCompare(String(y.v), undefined, { sensitivity: 'base' }) : (x.v === y.v ? 0 : x.v < y.v ? -1 : 1);
+    return d ? d * st.dir : x.i - y.i;
+  }).map((o) => o.r);
+}
+
+function bindSort(bodyId, cols) {
+  const table = el(bodyId).closest('table');
+  const ths = table ? Array.from(table.querySelectorAll('thead th')) : [];
+  ths.forEach((th, i) => {
+    if (!th.dataset.sortBound) {
+      th.dataset.sortBound = '1'; th.tabIndex = 0; th.setAttribute('role', 'button'); th.classList.add('sortable');
+      const go = () => {
+        const cur = SORT[bodyId];
+        const first = (LAST[bodyId].cols[i].num ? -1 : 1); // numbers start high to low, text starts A to Z
+        SORT[bodyId] = cur && cur.i === i ? { i, dir: -cur.dir } : { i, dir: first };
+        fillTable(bodyId, LAST[bodyId].rows, LAST[bodyId].cols);
+      };
+      th.addEventListener('click', go);
+      th.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    }
+    const st = SORT[bodyId];
+    if (st && st.i === i) { th.dataset.dir = st.dir === 1 ? 'asc' : 'desc'; th.setAttribute('aria-sort', st.dir === 1 ? 'ascending' : 'descending'); }
+    else { th.removeAttribute('data-dir'); th.removeAttribute('aria-sort'); }
+  });
+}
+
 function fillTable(bodyId, rows, cols) {
   const tb = el(bodyId);
   if (!tb) return;
+  LAST[bodyId] = { rows, cols };
+  bindSort(bodyId, cols);
+  rows = sortedRows(bodyId, rows, cols);
   tb.replaceChildren();
   if (!rows.length) {
     const tr = document.createElement('tr'); const td = document.createElement('td');
@@ -322,28 +366,28 @@ function drawTables() {
   fillTable('brand-rows', DATA.brands || [], [
     { key: 'label', link: (r) => (r.slug === 'other' ? null : r.slug) },
     { key: 'sessions', num: true, fmt: NUM.int }, { key: 'sessions_prev', num: true, fmt: NUM.int },
-    { num: true, text: (r) => chg(r.sessions_change_pct, r.sessions), tone: (r) => chgTone(r.sessions_change_pct) },
+    { num: true, sort: (r) => chgSort(r.sessions_change_pct, r.sessions), text: (r) => chg(r.sessions_change_pct, r.sessions), tone: (r) => chgTone(r.sessions_change_pct) },
     { key: 'exits', num: true, fmt: NUM.int }, { key: 'exits_prev', num: true, fmt: NUM.int },
-    { num: true, text: (r) => chg(r.exits_change_pct, r.exits), tone: (r) => chgTone(r.exits_change_pct) },
-    { num: true, text: (r) => rateText(r.rate) },
+    { num: true, sort: (r) => chgSort(r.exits_change_pct, r.exits), text: (r) => chg(r.exits_change_pct, r.exits), tone: (r) => chgTone(r.exits_change_pct) },
+    { num: true, sort: (r) => r.rate, text: (r) => rateText(r.rate) },
     { key: 'clicks', num: true, fmt: NUM.int }, { key: 'clicks_prev', num: true, fmt: NUM.int },
-    { num: true, text: (r) => chg(r.clicks_change_pct, r.clicks), tone: (r) => chgTone(r.clicks_change_pct) },
+    { num: true, sort: (r) => chgSort(r.clicks_change_pct, r.clicks), text: (r) => chg(r.clicks_change_pct, r.clicks), tone: (r) => chgTone(r.clicks_change_pct) },
   ]);
   fillTable('page-rows', DATA.pages || [], [
     { key: 'label', fmt: String },
     { key: 'sessions', num: true, fmt: NUM.int }, { key: 'sessions_prev', num: true, fmt: NUM.int },
-    { num: true, text: (r) => chg(r.sessions_change_pct, r.sessions), tone: (r) => chgTone(r.sessions_change_pct) },
+    { num: true, sort: (r) => chgSort(r.sessions_change_pct, r.sessions), text: (r) => chg(r.sessions_change_pct, r.sessions), tone: (r) => chgTone(r.sessions_change_pct) },
     { key: 'exits', num: true, fmt: NUM.int }, { key: 'exits_prev', num: true, fmt: NUM.int },
-    { num: true, text: (r) => chg(r.exits_change_pct, r.exits), tone: (r) => chgTone(r.exits_change_pct) },
-    { num: true, text: (r) => rateText(r.rate) },
+    { num: true, sort: (r) => chgSort(r.exits_change_pct, r.exits), text: (r) => chg(r.exits_change_pct, r.exits), tone: (r) => chgTone(r.exits_change_pct) },
+    { num: true, sort: (r) => r.rate, text: (r) => rateText(r.rate) },
   ]);
   const searchCols = [
     { key: 'label', fmt: String }, { key: 'clicks', num: true, fmt: NUM.int }, { key: 'clicks_prev', num: true, fmt: NUM.int },
-    { num: true, text: (r) => chg(r.change_pct, r.clicks), tone: (r) => chgTone(r.change_pct) },
+    { num: true, sort: (r) => chgSort(r.change_pct, r.clicks), text: (r) => chg(r.change_pct, r.clicks), tone: (r) => chgTone(r.change_pct) },
     { key: 'impressions', num: true, fmt: NUM.int }, { key: 'position', num: true, fmt: NUM.dec1 },
   ];
   fillTable('top-rows', DATA.topPages || [], searchCols);
-  fillTable('query-rows', DATA.queries || [], [{ key: 'label', fmt: String }, { text: (r) => r.page }].concat(searchCols.slice(1)));
+  fillTable('query-rows', DATA.queries || [], [{ key: 'label', fmt: String }, { sort: (r) => r.page, text: (r) => r.page }].concat(searchCols.slice(1)));
   document.querySelectorAll('.tablewrap').forEach((t) => { t.scrollTop = 0; });
 }
 
