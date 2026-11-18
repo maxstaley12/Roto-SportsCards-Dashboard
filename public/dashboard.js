@@ -135,7 +135,7 @@ function fillText() {
     ? 'Each point is one day, starting ' + md(cur.start) + '. The dashed line is the previous period, lined up day for day.'
     : 'Each point is one week of seven days, labeled by its start date. The dashed line is the previous period, lined up week for week.' + partial;
   setText('n-sessions', 'GA4 sessions to ' + S.path + '. ' + shared);
-  setText('n-exits', 'Sessions that included an exit click (the exit_click_goal key event), credited to the landing page. Counts are small on the smaller brands, so expect noise.');
+  setText('n-exits', 'Sessions that included an exit click (the exit_click_goal key event), credited to the landing page. Counts are small on the smaller pages, so expect noise.');
   setText('n-clicks', 'Google web search clicks to ' + S.path + ', same ' + (unit === 'day' ? 'daily' : 'weekly') + ' buckets.');
   setText('def-scope', DATA.scope === 'all' ? 'anywhere under /sports-cards/' : S.name + ' (' + S.path + ')');
   setText('def-prev', rangeText(pv.start, pv.end));
@@ -163,8 +163,8 @@ function fillText() {
   el('brands').classList.toggle('hide', !all);
   el('nav-brands').classList.toggle('hide', !all);
   setText('h-pages', all ? 'Landing pages by sessions' : 'Landing pages by sessions: ' + S.name);
-  setText('n-top', 'Google web search clicks per page in this range.' + (all ? '' : ' Brand pages are usually a single page, so this is mostly one row.') + ' Scroll inside the table to see more.');
-  setText('n-queries', 'The queries that sent the most clicks to ' + S.path + ' in this range, with the previous period next to them. Scroll inside the table to see more.' + (DATA.notes && DATA.notes.queriesTruncated ? ' Google returned more rows than this dashboard can read, so very small queries are missing.' : ''));
+  setText('n-top', 'Google web search clicks per page in this range.' + (all ? '' : ' Most pages are a single URL, so this is often one row.') + ' Scroll inside the table to see more.');
+  setText('n-queries', 'Each row is one query and the page it sent people to, for ' + S.path + ' in this range. A query that landed on two pages appears twice, so read the Landing page column before comparing rows. Scroll inside the table to see more.' + (DATA.notes && DATA.notes.queriesTruncated ? ' Google returned more rows than this dashboard can read, so very small queries are missing.' : ''));
 }
 
 // ---------- chart ----------
@@ -272,8 +272,8 @@ function drawPies() {
   const p = DATA.pies;
   if (!p || DATA.scope !== 'all') return;
   const tot = (rows) => rows.reduce((a, r) => a + r.value, 0);
-  drawPie(el('pie-sessions'), 'Sessions by brand', p.sessions || [], tot(p.sessions || []), 'sessions');
-  drawPie(el('pie-exits'), 'Exit-click sessions by brand', p.exits || [], tot(p.exits || []), 'exit-click sessions');
+  drawPie(el('pie-sessions'), 'Sessions by page', p.sessions || [], tot(p.sessions || []), 'sessions');
+  drawPie(el('pie-exits'), 'Exit-click sessions by page', p.exits || [], tot(p.exits || []), 'exit-click sessions');
 }
 
 // ---------- tables ----------
@@ -343,7 +343,7 @@ function drawTables() {
     { key: 'impressions', num: true, fmt: NUM.int }, { key: 'position', num: true, fmt: NUM.dec1 },
   ];
   fillTable('top-rows', DATA.topPages || [], searchCols);
-  fillTable('query-rows', DATA.queries || [], searchCols);
+  fillTable('query-rows', DATA.queries || [], [{ key: 'label', fmt: String }, { text: (r) => r.page }].concat(searchCols.slice(1)));
   document.querySelectorAll('.tablewrap').forEach((t) => { t.scrollTop = 0; });
 }
 

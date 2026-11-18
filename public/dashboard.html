@@ -14,12 +14,12 @@
     </div>
     <div class="rule"></div>
     <nav class="pills" id="nav">
-      <a href="#kpis">Overview</a><a href="#trend">Trends</a><a href="#brands" id="nav-brands">Brands</a><a href="#pages">Pages</a><a href="#queries">Search queries</a><a href="#defs">Definitions</a>
+      <a href="#kpis">Overview</a><a href="#trend">Trends</a><a href="#brands" id="nav-brands">Page comparison</a><a href="#pages">Landing pages</a><a href="#queries">Search queries</a><a href="#defs">Definitions</a>
     </nav>
     <div class="controls" id="controls">
       <div class="ctl">
         <span class="ctl-label">View</span>
-        <div class="seg wrap" id="scope-seg" role="group" aria-label="Brand view"></div>
+        <div class="seg wrap" id="scope-seg" role="group" aria-label="Page view"></div>
       </div>
       <div class="ctl">
         <span class="ctl-label">Dates</span>
@@ -63,15 +63,15 @@
   </section>
 
   <section id="brands">
-    <h2>Brands side by side</h2>
-    <p class="note" id="n-brands">Every page under /sports-cards, grouped by brand, with the previous period next to each number. Click a brand name to open its own view.</p>
+    <h2>Pages side by side</h2>
+    <p class="note" id="n-brands">Every URL under /sports-cards, rolled up by page, with the previous period next to each number. Click a page name to open its own view.</p>
     <div class="card tablewrap">
       <table class="grid" id="tbl-brands">
-        <thead><tr><th>Brand</th><th class="num">Sessions</th><th class="num">Prev</th><th class="num">Change</th><th class="num">Exit-click sessions</th><th class="num">Prev</th><th class="num">Change</th><th class="num">Exit-click rate</th><th class="num">Search clicks</th><th class="num">Prev</th><th class="num">Change</th></tr></thead>
+        <thead><tr><th>Page</th><th class="num">Sessions</th><th class="num">Prev</th><th class="num">Change</th><th class="num">Exit-click sessions</th><th class="num">Prev</th><th class="num">Change</th><th class="num">Exit-click rate</th><th class="num">Search clicks</th><th class="num">Prev</th><th class="num">Change</th></tr></thead>
         <tbody id="brand-rows"></tbody>
       </table>
     </div>
-    <h3 class="subhead">Share by brand</h3>
+    <h3 class="subhead">Share by page</h3>
     <div class="pies">
       <div class="card pie" id="pie-sessions"></div>
       <div class="card pie" id="pie-exits"></div>
@@ -98,11 +98,11 @@
   </section>
 
   <section id="queries">
-    <h2>Top search queries</h2>
-    <p class="note" id="n-queries">The queries that sent the most clicks in this range, with the previous period next to them. Scroll inside the table to see more.</p>
+    <h2>Top search queries and where they landed</h2>
+    <p class="note" id="n-queries">Each row is one query and the page it sent people to. A query that landed on two pages appears twice, so read the Landing page column before comparing rows.</p>
     <div class="card tablewrap">
       <table class="grid" id="tbl-queries">
-        <thead><tr><th>Query</th><th class="num">Clicks</th><th class="num">Prev</th><th class="num">Change</th><th class="num">Impressions</th><th class="num">Avg position</th></tr></thead>
+        <thead><tr><th>Query</th><th>Landing page</th><th class="num">Clicks</th><th class="num">Prev</th><th class="num">Change</th><th class="num">Impressions</th><th class="num">Avg position</th></tr></thead>
         <tbody id="query-rows"></tbody>
       </table>
     </div>
@@ -115,10 +115,10 @@
       <li><b>Exit-click sessions:</b> the GA4 <code>exit_click_goal</code> key event, which GA4 counts once per session, credited to the page the session landed on. So the number is sessions that started on that page and included an exit click, not total clicks. It is a stand-in for conversions: it does not show whether the visitor then signed up or bought anything with the brand. <b>Exit-click rate</b> is exit-click sessions divided by sessions.</li>
       <li><b>Search clicks, impressions, position and click-through rate:</b> Google Search Console, web search only. Totals are the sum of the page rows, so they can differ slightly from the Search Console screen.</li>
       <li><b>Previous period:</b> the same number of days ending the day before your start date (<span id="def-prev">—</span>). Everything marked "Prev" and "Change" compares to it. "new" means there was nothing in the previous period, which is common for pages that launched recently.</li>
-      <li><b>Brands:</b> each landing page is placed in a brand by its URL (for example /sports-cards/trove is Trove). Anything under /sports-cards that matches no brand appears under "Other /sports-cards pages", so the brand rows always add up to the All view. The brand list lives in the project's config file.</li>
+      <li><b>Pages:</b> each landing URL is matched to a page by its path (for example /sports-cards/apps is Apps, /sports-cards/trove is Trove). Anything under /sports-cards that matches no listed page appears under "Other /sports-cards pages", so the rows always add up to the All view. The page list lives in the project's config file, and new pages (promos, for example) are added there.</li>
       <li><b>Left out:</b> <code>/sports-cards/templates/general.php</code>, a template URL that redirects to the homepage, is excluded from every number.</li>
       <li><b>Newer pages:</b> Packz, Courtyard, Tilt Rips and Arena Club are new or low-traffic, so their counts are small and their changes are noisy.</li>
-      <li><b>Search queries:</b> up to the top 25,000 query and page combinations Google returns per period are used, so the table covers the biggest queries well but can miss rare ones on smaller brand pages. Anonymized queries are not listed.</li>
+      <li><b>Search queries:</b> up to the top 25,000 query and page combinations Google returns per period are used, so the table covers the biggest queries well but can miss rare ones on smaller pages. Each query is listed once per landing page it reached. Anonymized queries are not listed.</li>
       <li><b>Window:</b> <span id="def-window">—</span> Search Console data lags about two days, so the latest end date you can pick is two days ago. Ranges of 21 days or fewer are charted by day, longer ranges by week counted from your start date.</li>
     </ul>
   </details>
