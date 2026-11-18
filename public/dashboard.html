@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sports Cards Tracker</title>
+</head><body>
+<link rel="stylesheet" href="dashboard.css">
+<div class="sc">
+  <header>
+    <div class="hrow">
+      <div>
+        <h1 id="page-title"><span class="sq"></span><span id="title-text">Sports Cards Tracker</span></h1>
+        <p class="scope" id="scope">Loading…</p>
+      </div>
+      <div class="rangebox" id="rangebox">—</div>
+    </div>
+    <div class="rule"></div>
+    <nav class="pills" id="nav">
+      <a href="#kpis">Overview</a><a href="#trend">Trends</a><a href="#brands" id="nav-brands">Brands</a><a href="#pages">Pages</a><a href="#queries">Search queries</a><a href="#defs">Definitions</a>
+    </nav>
+    <div class="controls" id="controls">
+      <div class="ctl">
+        <span class="ctl-label">View</span>
+        <div class="seg wrap" id="scope-seg" role="group" aria-label="Brand view"></div>
+      </div>
+      <div class="ctl">
+        <span class="ctl-label">Dates</span>
+        <div class="dates">
+          <input type="date" id="d-start" aria-label="Start date">
+          <span class="to">to</span>
+          <input type="date" id="d-end" aria-label="End date">
+          <button type="button" id="d-apply" class="apply">Apply</button>
+        </div>
+      </div>
+      <div class="ctl">
+        <span class="ctl-label">Quick ranges</span>
+        <div class="presets" id="presets">
+          <button type="button" data-preset="l28">Last 28 days</button>
+          <button type="button" data-preset="l3m">Last 3 months</button>
+          <button type="button" data-preset="l6m">Last 6 months</button>
+          <button type="button" data-preset="l12m">Last 12 months</button>
+        </div>
+      </div>
+      <p class="ctl-msg" id="ctl-msg" role="status"></p>
+    </div>
+  </header>
+
+  <section id="kpis">
+    <p class="lede" id="lede">—</p>
+    <div class="tiles" id="tiles"></div>
+    <p class="note asofline" id="asof"><span class="asof" id="asof-tag">AS OF —</span> <span id="asof-text"></span></p>
+  </section>
+
+  <section id="trend">
+    <h2 id="h-sessions">Sessions by week</h2>
+    <p class="note" id="n-sessions"></p>
+    <div class="card chart" id="chart-sessions"></div>
+    <h2 id="h-exits">Exit-click sessions by week</h2>
+    <p class="note" id="n-exits"></p>
+    <div class="card chart" id="chart-exits"></div>
+    <h2 id="h-clicks">Search clicks by week</h2>
+    <p class="note" id="n-clicks"></p>
+    <div class="card chart" id="chart-clicks"></div>
+  </section>
+
+  <section id="brands">
+    <h2>Brands side by side</h2>
+    <p class="note" id="n-brands">Every page under /sports-cards, grouped by brand, with the previous period next to each number. Click a brand name to open its own view.</p>
+    <div class="card tablewrap">
+      <table class="grid" id="tbl-brands">
+        <thead><tr><th>Brand</th><th class="num">Sessions</th><th class="num">Prev</th><th class="num">Change</th><th class="num">Exit-click sessions</th><th class="num">Prev</th><th class="num">Change</th><th class="num">Exit-click rate</th><th class="num">Search clicks</th><th class="num">Prev</th><th class="num">Change</th></tr></thead>
+        <tbody id="brand-rows"></tbody>
+      </table>
+    </div>
+    <h3 class="subhead">Share by brand</h3>
+    <div class="pies">
+      <div class="card pie" id="pie-sessions"></div>
+      <div class="card pie" id="pie-exits"></div>
+    </div>
+  </section>
+
+  <section id="pages">
+    <h2 id="h-pages">Landing pages by sessions</h2>
+    <p class="note" id="n-pages">Sessions that started on each page, with the exit-click sessions they produced. Pages with several query-string versions are combined. Scroll inside the table to see more.</p>
+    <div class="card tablewrap short">
+      <table class="grid" id="tbl-pages">
+        <thead><tr><th class="th-page">Page</th><th class="num">Sessions</th><th class="num">Prev</th><th class="num">Change</th><th class="num">Exit-click sessions</th><th class="num">Prev</th><th class="num">Change</th><th class="num">Exit-click rate</th></tr></thead>
+        <tbody id="page-rows"></tbody>
+      </table>
+    </div>
+    <h2 id="h-top">Top pages by search clicks</h2>
+    <p class="note" id="n-top">Google web search clicks per page in this range. Scroll inside the table to see more.</p>
+    <div class="card tablewrap short">
+      <table class="grid" id="tbl-top">
+        <thead><tr><th class="th-page">Page</th><th class="num">Clicks</th><th class="num">Prev</th><th class="num">Change</th><th class="num">Impressions</th><th class="num">Avg position</th></tr></thead>
+        <tbody id="top-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="queries">
+    <h2>Top search queries</h2>
+    <p class="note" id="n-queries">The queries that sent the most clicks in this range, with the previous period next to them. Scroll inside the table to see more.</p>
+    <div class="card tablewrap">
+      <table class="grid" id="tbl-queries">
+        <thead><tr><th>Query</th><th class="num">Clicks</th><th class="num">Prev</th><th class="num">Change</th><th class="num">Impressions</th><th class="num">Avg position</th></tr></thead>
+        <tbody id="query-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <details class="defs" id="defs">
+    <summary>Definitions and caveats</summary>
+    <ul>
+      <li><b>Sessions:</b> GA4 sessions from all channels whose landing page is <span id="def-scope">under /sports-cards/</span>. Nearly all of this traffic comes from search, so there is no separate organic figure.</li>
+      <li><b>Exit-click sessions:</b> the GA4 <code>exit_click_goal</code> key event, which GA4 counts once per session, credited to the page the session landed on. So the number is sessions that started on that page and included an exit click, not total clicks. It is a stand-in for conversions: it does not show whether the visitor then signed up or bought anything with the brand. <b>Exit-click rate</b> is exit-click sessions divided by sessions.</li>
+      <li><b>Search clicks, impressions, position and click-through rate:</b> Google Search Console, web search only. Totals are the sum of the page rows, so they can differ slightly from the Search Console screen.</li>
+      <li><b>Previous period:</b> the same number of days ending the day before your start date (<span id="def-prev">—</span>). Everything marked "Prev" and "Change" compares to it. "new" means there was nothing in the previous period, which is common for pages that launched recently.</li>
+      <li><b>Brands:</b> each landing page is placed in a brand by its URL (for example /sports-cards/trove is Trove). Anything under /sports-cards that matches no brand appears under "Other /sports-cards pages", so the brand rows always add up to the All view. The brand list lives in the project's config file.</li>
+      <li><b>Left out:</b> <code>/sports-cards/templates/general.php</code>, a template URL that redirects to the homepage, is excluded from every number.</li>
+      <li><b>Newer pages:</b> Packz, Courtyard, Tilt Rips and Arena Club are new or low-traffic, so their counts are small and their changes are noisy.</li>
+      <li><b>Search queries:</b> up to the top 25,000 query and page combinations Google returns per period are used, so the table covers the biggest queries well but can miss rare ones on smaller brand pages. Anonymized queries are not listed.</li>
+      <li><b>Window:</b> <span id="def-window">—</span> Search Console data lags about two days, so the latest end date you can pick is two days ago. Ranges of 21 days or fewer are charted by day, longer ranges by week counted from your start date.</li>
+    </ul>
+  </details>
+</div>
+<script src="d3.min.js"></script>
+<script src="dashboard.js"></script>
+
+</body></html>
