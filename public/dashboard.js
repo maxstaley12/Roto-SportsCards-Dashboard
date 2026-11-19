@@ -35,11 +35,13 @@ const state = { scope: 'all', start: null, end: null };
   if (/^\d{4}-\d{2}-\d{2}$/.test(p.get('end') || '')) state.end = p.get('end');
 })();
 
+const isDefaultRange = () => !!(META && DATA && META.defaults.start === DATA.window.current.start && META.defaults.end === DATA.window.current.end);
+
 function syncUrl() {
   const p = new URLSearchParams();
   if (state.scope !== 'all') p.set('scope', state.scope);
   const d = META && META.defaults;
-  // A range equal to the default is left out of the link so the link keeps following "the last 3 months".
+  // A range equal to the default is left out of the link so the link keeps following the default (launch to latest).
   if (state.start && state.end && !(d && d.start === state.start && d.end === state.end)) { p.set('start', state.start); p.set('end', state.end); }
   const qs = p.toString();
   try { history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '')); } catch (e) { /* ignore */ }
@@ -102,15 +104,15 @@ function fillLede() {
   const cur = DATA.window.current;
   const isDefault = META && META.defaults.start === cur.start && META.defaults.end === cur.end;
   if (!s.current && !s.previous) {
-    e.append((isDefault ? 'Last 3 months (' : 'For ') + rangeText(cur.start, cur.end) + (isDefault ? ')' : '') + ': no sessions to ' + S.name + ' in this range or the previous ' + DATA.days + ' days. A page that went live recently will show zeros until it has data.');
+    e.append((isDefault ? (META.defaults.sinceLaunch ? 'Since launch (' : 'Latest ' + DATA.days + ' days (') : 'For ') + rangeText(cur.start, cur.end) + (isDefault ? ')' : '') + ': no sessions to ' + S.name + ' in this range or the previous ' + DATA.days + ' days. A page that went live recently will show zeros until it has data.');
     return;
   }
-  const pre = (isDefault ? 'Last 3 months (' : 'For ') + rangeText(cur.start, cur.end) + (isDefault ? ')' : '');
+  const pre = (isDefault ? (META.defaults.sinceLaunch ? 'Since launch (' : 'Latest ' + DATA.days + ' days (') : 'For ') + rangeText(cur.start, cur.end) + (isDefault ? ')' : '');
   if (!s.previous) {
     e.append(pre + ', ' + S.name + ' had ', b(NUM.int(s.current) + ' sessions'), ', ', b(NUM.int(x.current || 0)) , ' of them with an exit click, and ', b(NUM.int(c.current || 0) + ' search clicks'), '. There is no data in the previous ' + DATA.days + ' days, so no comparison yet.');
     return;
   }
-  e.append((isDefault ? 'Last 3 months (' : 'For ') + rangeText(cur.start, cur.end) + (isDefault ? ')' : '') + ', sessions to ' + S.name + ' are ', b(pctText(s.change_pct)),
+  e.append((isDefault ? (META.defaults.sinceLaunch ? 'Since launch (' : 'Latest ' + DATA.days + ' days (') : 'For ') + rangeText(cur.start, cur.end) + (isDefault ? ')' : '') + ', sessions to ' + S.name + ' are ', b(pctText(s.change_pct)),
     ' and search clicks are ', b(pctText(c.change_pct)), ' vs the previous ' + DATA.days + ' days. Sessions with an exit click: ',
     b(NUM.int(x.current || 0)), ' vs ', b(NUM.int(x.previous || 0)), ' (' + (x.change_pct == null ? 'new' : pctText(x.change_pct)) + ').');
 }
@@ -141,12 +143,17 @@ function fillText() {
   setText('def-prev', rangeText(pv.start, pv.end));
   setText('def-window', days + ' days, ' + rangeText(cur.start, cur.end) + '.');
   setText('asof-tag', 'AS OF ' + md(cur.end).toUpperCase());
-  setText('asof-text', 'Search Console data lags about two days, so ranges end no later than ' + md(META.latest) + '. Dates move forward on their own: the default view is always the last 3 months.');
+  setText('asof-text', 'Search Console data lags about two days, so ranges end no later than ' + md(META.latest) + '. Dates move forward on their own: the default view runs from launch (' + md(META.defaults.start) + ') to the latest day.');
   // explain empty comparisons: the section only started getting traffic on a certain date
   const n = DATA.notes || {}, ln = el('launchnote');
   const nearStart = n.firstDate && n.firstDate > cur.start;
   if (ln) {
-    if (n.previousEmpty || nearStart) {
+    if (META.defaults.sinceLaunch && isDefaultRange() && n.previousEmpty) {
+      ln.replaceChildren();
+      const b = document.createElement('b'); b.textContent = 'Since launch. ';
+      ln.append(b, 'This is everything since the section\'s first traffic on ' + mdy(n.firstDate || cur.start) + '. There is no earlier period to compare against, so changes show as "new". Pick "Last 28 days" for a like-for-like comparison once there are 56 days of data, around ' + md(plusDays(n.firstDate || cur.start, 57)) + '.');
+      ln.classList.remove('hide');
+    } else if (n.previousEmpty || nearStart) {
       const bits = [];
       if (n.firstDate) bits.push('The first traffic in this range is on ' + mdy(n.firstDate) + ', so earlier days are empty.');
       if (n.previousEmpty) bits.push('The previous period (' + rangeText(pv.start, pv.end) + ') has no data at all, so every change shows as "new".');
@@ -417,7 +424,7 @@ function presetRanges() {
   if (!META) return {};
   const end = META.latest;
   const back = (n) => ({ start: plusDays(end, -(n - 1)), end });
-  return { l28: back(28), l3m: META.defaults, l6m: back(180), l12m: back(365) };
+  return { launch: { start: META.defaults.start, end: META.defaults.end }, l28: back(28), l3m: back(90), l6m: back(180), l12m: back(365) };
 }
 
 function syncControls() {
